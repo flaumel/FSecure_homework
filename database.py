@@ -2,7 +2,6 @@ import sqlite3
 import logging
 import data as dt
 
-
 '''
  Function for creating database if it doesn't exist,
  opening connection to it and creating needed tables
@@ -106,12 +105,11 @@ def insert_network(conn, c, data):
         logging.debug("Network %s exists and is cached." % networkStr)
         return networkCache[networkStr]
     else:
-        row = None
-        #c.execute("SELECT rowid FROM networkData WHERE (carrier=? AND connection=?)",
-        #          [ network['carrier'],
-        #            network['connection'] ]
-        #         )
-        #row = c.fetchone()
+        c.execute("SELECT rowid FROM networkData WHERE (carrier=? AND connection=?)",
+                  [ network['carrier'],
+                    network['connection'] ]
+                 )
+        row = c.fetchone()
         #Exists, return the row number
         if not (row == None):
             networkCache.update({networkStr:row[0]})
@@ -123,9 +121,8 @@ def insert_network(conn, c, data):
                        [ network['carrier'],
                          network['connection'] ]
                      )
-            conn.commit()
             networkCache.update({networkStr:c.lastrowid})
-            #logging.debug("Inserted network: %s %s into database" % ( network['carrier'], network['connection'] ))
+            logging.debug("Inserted network: %s %s into database" % ( network['carrier'], network['connection'] ))
             return c.lastrowid
 
 '''
@@ -149,13 +146,12 @@ def insert_system(conn, c, data):
     # We do not have system in cache dictionary
     else:
         # Check if our operating system exists in our database
-        #c.execute("SELECT rowid FROM systemData WHERE (kind=? AND version=? AND name=?)",
-        #          [ system['kind'],
-        #            system['version'],
-        #            system['name'] ]
-        #         )
-        #row = c.fetchone()
-        row = None
+        c.execute("SELECT rowid FROM systemData WHERE (kind=? AND version=? AND name=?)",
+                  [ system['kind'],
+                    system['version'],
+                    system['name'] ]
+                 )
+        row = c.fetchone()
         # Exists, return the row number and update cache
         if not (row == None):
             systemCache.update({systemStr:row[0]})
@@ -168,7 +164,6 @@ def insert_system(conn, c, data):
                         system['version'],
                         system['name'] ]
                      )
-            conn.commit()
             systemCache.update({systemStr:c.lastrowid})
             logging.debug("Inserted system: %s %s %s into database",
                            system['kind'],
@@ -195,14 +190,13 @@ def insert_application(conn, c, data):
         logging.debug("Application %s exists and is cached." % appStr)
         return appCache[appStr]
     else:
-        #c.execute("SELECT rowid FROM appData WHERE (name=? AND version=? AND language=? AND package=?)",
-        #          [ app['name'],
-        #            app['version'],
-        #            app['language'],
-        #            app['package_name'] ]
-        #         )
-        #row = c.fetchone()
-        row = None
+        c.execute("SELECT rowid FROM appData WHERE (name=? AND version=? AND language=? AND package=?)",
+                  [ app['name'],
+                    app['version'],
+                    app['language'],
+                    app['package_name'] ]
+                 )
+        row = c.fetchone()
         if not(row == None):
             appCache.update({appStr:row[0]})
             logging.debug("Application %s exists and got cached." % appStr)
@@ -214,7 +208,6 @@ def insert_application(conn, c, data):
                         app['language'],
                         app['package_name'] ]
                      )
-            conn.commit()
             logging.debug("Inserted application: %s %s %s %s into database",
                            app['name'],
                            app['version'],
@@ -241,17 +234,16 @@ def insert_geo(conn, c, data):
         return geoCache[geo['hash']]
     else:
         # Check if our geo exists in our database
-        #c.execute("SELECT rowid FROM geoData WHERE (city=? AND country=? AND region=? AND range_X=? AND range_Y=? AND latitude=? AND longitude=?)",
-        #          [ geo['city'] ,
-        #            geo['country'],
-        #            geo['region'],
-        #            geo['range0'],
-        #            geo['range1'],
-        #            geo['latitude'],
-        #            geo['longitude'] ]
-        #         )
-        #row = c.fetchone()
-        row = None
+        c.execute("SELECT rowid FROM geoData WHERE (city=? AND country=? AND region=? AND range_X=? AND range_Y=? AND latitude=? AND longitude=?)",
+                  [ geo['city'] ,
+                    geo['country'],
+                    geo['region'],
+                    geo['range0'],
+                    geo['range1'],
+                    geo['latitude'],
+                    geo['longitude'] ]
+                 )
+        row = c.fetchone()
         # Exists, return the row number
         if not (row == None):
             logging.debug("Found existing geo data: %s" % row)
@@ -268,10 +260,20 @@ def insert_geo(conn, c, data):
                         geo['latitude'],
                         geo['longitude'] ]
                      )
-            conn.commit()
             geoCache.update({geo['hash']:c.lastrowid})
             return c.lastrowid
 
+'''
+ Function inserting device into deviceData table
+ Calls functions for inserting system data
+ Arguments:
+           conn - connection to database
+           c    - database coursor
+           data - data containing geographical information
+                  into database
+ Returns:
+           row number where data was entered or found
+'''
 def insert_device(conn, c, data):
     device = dt.get_deviceData(data)
 
@@ -279,9 +281,8 @@ def insert_device(conn, c, data):
         logging.debug("Device %s exists and is cached." % device['deviceId'])
         return deviceCache[device['deviceId']]
     else:
-        #c.execute("SELECT rowid FROM deviceData WHERE deviceId=?", [device['deviceId']])
-        #row = c.fetchone()
-        row = None
+        c.execute("SELECT rowid FROM deviceData WHERE deviceId=?", [device['deviceId']])
+        row = c.fetchone()
         # Exists, return the row number
         if not (row == None):
             logging.debug("Device %s exists and got cached!" % device['deviceId'])
@@ -301,26 +302,32 @@ def insert_device(conn, c, data):
                         device['height'],
                         device['width'] ]
                      )
-            conn.commit()
             deviceCache.update({device['deviceId']:c.lastrowid})
             logging.debug("Adding device %s" % device['deviceId'])
             return c.lastrowid
 
+'''
+ Function inserting event into eventData table
+ Calls functions for inserting device, application,
+ geo and network information
+ Arguments:
+           conn - connection to database
+           c    - database coursor
+           data - data containing geographical information
+                  into database
+'''
 def insert_event_data(conn, c, data):
     event = dt.get_eventData(data)
 
     if event['eventId'] in eventCache:
         logging.warning("Duplicate event %s", event['eventId'])
         logging.debug("Event %s exists and is cached." % event['eventId'])
-        #return eventCache[event['eventId']]
     else:
-        #c.execute("SELECT rowid FROM eventData WHERE eventID=?", [event['eventId']])
-        #row = c.fetchone()
-        row = None
+        c.execute("SELECT rowid FROM eventData WHERE eventID=?", [event['eventId']])
+        row = c.fetchone()
         if not (row == None):
             logging.warning("Duplicate event %s", event['eventId'])
             eventCache.append(event['eventId'])
-            #return row[0]
         # Does not exist, add it into database and return row number
         else:
             c.execute("INSERT INTO eventData VALUES ( ?, ?, ?, ?, ?, ?, ?, NULL, ?, NULL)",
@@ -336,6 +343,5 @@ def insert_event_data(conn, c, data):
                         #insert_additional_info
                       ]
                      )
-            conn.commit()
             eventCache.append(event['eventId'])
             logging.debug("Adding event %s" % event['eventId'])
