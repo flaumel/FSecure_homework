@@ -1,5 +1,16 @@
 import hashlib
 
+'''
+ Function getting system data from event dictionary
+ Arguments:
+           data - dictionary including all event information
+ Returns:
+           system - dictionary including information
+                    about system:
+                    - name
+                    - kind
+                    - version
+'''
 def get_systemData(data):
     system = {}
     if 'device.operating_system.name' in data:
@@ -16,6 +27,18 @@ def get_systemData(data):
         system.update({'version':'unknown'})
     return system
 
+'''
+ Function getting application data from event dictionary
+ Arguments:
+           data - dictionary including all event information
+ Returns:
+           app  - dictionary including information
+                  about application:
+                  - name
+                  - package_name
+                  - language
+                  - version
+'''
 def get_appData(data):
     app = {}
     if 'application.name' in data:
@@ -36,6 +59,16 @@ def get_appData(data):
         app.update({'version':'unknown'})
     return app
 
+'''
+ Function getting network data from event dictionary
+ Arguments:
+           data - dictionary including all event information
+ Returns:
+           network  - dictionary including information
+                      about network:
+                      - carrier
+                      - connection
+'''
 def get_networkData(data):
     network = {}
     if 'network.carrier' in data:
@@ -48,6 +81,22 @@ def get_networkData(data):
         network.update({'connection':'unknown'});
     return network
 
+'''
+ Function getting geographical data from event dictionary
+ Arguments:
+           data - dictionary including all event information
+ Returns:
+           geo  - dictionary including information
+                  about geo:
+                  - region
+                  - city
+                  - country
+                  - range0
+                  - range1
+                  - latitude
+                  - longitude
+                  - hash (md5 of all above)
+'''
 def get_geoData(data):
     geo = {}
     if 'sender_info.geo.region' in data:
@@ -85,6 +134,23 @@ def get_geoData(data):
 
     return geo
 
+'''
+ Function getting device data from event dictionary
+ Arguments:
+           data - dictionary including all event information
+ Returns:
+           device  - dictionary including information
+                     about device:
+                     - deviceId
+                     - type
+                     - manufacturer
+                     - model
+                     - memory
+                     - architecture
+                     - lang
+                     - width
+                     - height
+'''
 def get_deviceData(data):
     device = {}
     if 'device.device_id' in data:
@@ -125,6 +191,19 @@ def get_deviceData(data):
         device.update({'height':-1})
     return device
 
+'''
+ Function getting event data from event dictionary
+ Arguments:
+           data - dictionary including all event information
+ Returns:
+           event  - dictionary including information
+                    about event:
+                    - deviceId
+                    - timestamp
+                    - type
+                    - system
+                    - eventId
+'''
 def get_eventData(data):
     event = {}
     event.update({'deviceId':data['device.device_id'].encode('ascii','ignore').decode('utf-8')})
